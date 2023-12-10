@@ -28,7 +28,7 @@ class Firebase:
         return False
 
     def imports(self):
-        print("Importing: ", end="", flush=True)
+        sys.stdout.write("Importing: ")
         # Walks through our local folder, and writes all the files to firestore
         for root, _, files in os.walk(ROOT_FOLDER, topdown=False):
             if self.ignorePath(root) or root == ROOT_FOLDER:
@@ -40,19 +40,19 @@ class Firebase:
                     self.db.collection(root.removeprefix(ROOT_FOLDER + "/")).document(
                         name
                     ).set(data)
-                print(".", end="", flush=True)
+                sys.stdout.write(".")
         print("Import completed")
 
     def exports(self, collections):
         # Export all data from our selected collections
         for collection in collections:
-            print(f"Exporting: [{collection}]", end="", flush=True)
+            sys.stdout.write(f"Exporting: [{collection}]")
             self.executeOnRemoteCollections(collection, "export")
             print("Done")
         print("Export completed")
 
     def deletes(self):
-        print("Deleting: ", end="", flush=True)
+        sys.stdout.write("Deleting: ")
         # Delete all documents not in our local static folder
         for delete in [item for item in os.listdir(ROOT_FOLDER)]:
             self.executeOnRemoteCollections(delete, "delete")
@@ -80,7 +80,7 @@ class Firebase:
                         path_with_doc_id + ".json"
                     ) and not os.path.isdir(path_with_doc_id):
                         root_ref.document(doc_id).delete()
-                        print(".", end="", flush=True)
+                        sys.stdout.write(".")
                 case "export":
                     # export files
                     try:
@@ -90,7 +90,7 @@ class Firebase:
                     Path(path_with_doc_id + ".json").write_text(
                         json.dumps(data, indent=2, default=str)
                     )
-                    print(".", end="", flush=True)
+                    sys.stdout.write(".")
                 case _:
                     pass
             # Continue down subcollections in collection
@@ -132,6 +132,7 @@ def emulate():
             "--project",
             PROJECT,
         ],
+        shell=True # Windows compatibility
     )
 
     def waitForEmu():
@@ -141,6 +142,8 @@ def emulate():
                 print(urllib.request.urlopen("http://" + LOCAL_ENDPOINT).read())
                 return
             except:
+                if pro.poll() is not None:
+                    break
                 sleep(5)
         raise Exception("Could not load emulator")
 
